@@ -22,7 +22,7 @@ ARG SONIC_VERSION
 
 # 合并：构建应用并准备运行目录
 RUN set -eux && \
-    CGO_ENABLED=1 GOOS=linux && \
+    CGO_ENABLED=1 GOOS=linux \
     go build -o sonic \
     -ldflags="-s -w \
         -X github.com/go-sonic/sonic/consts.SonicVersion=${SONIC_VERSION} \
