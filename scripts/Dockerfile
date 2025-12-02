@@ -1,5 +1,6 @@
 # 构建阶段
-FROM golang:1.19.3-alpine as builder
+# FROM golang:1.19.3-alpine as builder
+FROM golang:alpine as builder
 
 # 设置工作目录
 WORKDIR /src
