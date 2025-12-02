@@ -14,8 +14,12 @@ RUN set -eux && \
     g++ && \
     # 浅克隆源代码
     git clone --branch menory --depth 1 https://github.com/bailangvvk/sonic . && \
-    # 构建应用（优化版本）
-    CGO_ENABLED=1 GOOS=linux go build -o sonic -ldflags="-s -w" -trimpath . && \
+    # 构建应用（Hugo风格激进优化）
+    CGO_ENABLED=1 GOOS=linux go build -o sonic \
+        -ldflags="-s -w -extldflags '-static' -X github.com/go-sonic/sonic/consts.SonicVersion=docker" \
+        -trimpath . && \
+    # 使用strip进一步减小二进制大小
+    strip --strip-all sonic && \
     # 准备运行文件
     mkdir -p /app && \
     cp sonic /app/ && \
