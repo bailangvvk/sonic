@@ -8,10 +8,12 @@ RUN set -eux && \
         ca-certificates \
         gcc \
         g++ \
-        build-base && \
-    mkdir -p /go/src/github.com/go-sonic/sonic
+        build-base \
+        tzdata \
+        && \
+    mkdir -p /go-sonic
 
-WORKDIR /go/src/github.com/go-sonic/sonic
+WORKDIR /go-sonic
 
 COPY . .
 
