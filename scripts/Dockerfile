@@ -7,17 +7,8 @@ RUN apk --no-cache add git ca-certificates gcc g++
 COPY . /go/src/github.com/go-sonic/sonic/
 WORKDIR /go/src/github.com/go-sonic/sonic
 
-# 定义构建参数（提供默认值避免构建失败）
-ARG SONIC_VERSION="latest"
-ARG BUILD_COMMIT="unknown"
-ARG BUILD_TIME="unknown"
-
-# 构建应用（保持ldflags但使用默认值）
-RUN CGO_ENABLED=1 GOOS=linux go build -o sonic -ldflags="-s -w \
-    -X github.com/go-sonic/sonic/consts.SonicVersion=${SONIC_VERSION} \
-    -X github.com/go-sonic/sonic/consts.BuildCommit=${BUILD_COMMIT} \
-    -X github.com/go-sonic/sonic/consts.BuildTime=${BUILD_TIME}" \
-    -trimpath .
+# 构建应用（简化版本，移除不必要的ldflags参数）
+RUN CGO_ENABLED=1 GOOS=linux go build -o sonic -trimpath .
 
 # 准备运行文件并在同一层清理
 RUN mkdir -p /app && \
