@@ -1,42 +1,31 @@
-# 构建阶段
-FROM golang:1.19.3-alpine AS builder
+FROM golang:1.19.3-alpine as builder
 
-WORKDIR /src
+RUN apk --no-cache add git ca-certificates gcc g++
 
-# 合并所有构建步骤到一个RUN命令（减少镜像层数）
-RUN set -eux && \
-    # 安装依赖（包括CGO编译所需工具）
-    apk add --no-cache --virtual .build-deps \
-    git \
-    ca-certificates \
-    gcc \
-    g++ \
-    build-base \
-    && \
-    # 克隆源代码
-    git clone --branch menory --depth 1 https://github.com/bailangvvk/sonic . && \
-    # 构建应用
-    CGO_ENABLED=1 GOOS=linux go build -o /app/sonic -trimpath . && \
-    # 准备运行文件
-    mkdir -p /app && \
-    cp -r conf /app/ && \
-    cp -r resources /app/ && \
-    cp scripts/docker_init.sh /app/ && \
-    # 确保可执行文件权限
-    chmod +x /app/sonic
+COPY . /go/src/github.com/go-sonic/sonic/
+WORKDIR /go/src/github.com/go-sonic/sonic
 
-# 运行阶段
-# FROM busybox:musl
-FROM alpine:latest AS runpod
+# 移除不必要的ldflags参数，简化构建
+RUN CGO_ENABLED=1 GOOS=linux go build -o sonic -trimpath .
 
-# 复制应用文件
+RUN mkdir -p /app/conf && \
+    mkdir /app/resources && \
+    cp -r /go/src/github.com/go-sonic/sonic/sonic /app/ && \
+    cp -r /go/src/github.com/go-sonic/sonic/conf /app/ && \
+    cp -r /go/src/github.com/go-sonic/sonic/resources /app/ && \
+    cp /go/src/github.com/go-sonic/sonic/scripts/docker_init.sh /app/
+
+FROM alpine:latest as prod
+
 COPY --from=builder /app/ /app/
 
-# 设置时区
-ENV TZ=Asia/Shanghai
+RUN apk add --no-cache tzdata && \
+    cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
+    echo "Asia/Shanghai" > /etc/timezone
 
 VOLUME /sonic
 EXPOSE 8080
-WORKDIR /sonic
 
+WORKDIR /sonic
+# CMD /app/docker_init.sh && /app/sonic -config /sonic/conf/config.yaml
 CMD /app/docker_init.sh && /app/sonic
