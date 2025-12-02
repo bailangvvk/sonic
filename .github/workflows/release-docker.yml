@@ -1,53 +1,76 @@
-name: Release-Docker
-
+name: Sonic Build
 on:
-  # release:
-  #   types: [published]
   workflow_dispatch:
   push:
     branches: [ menory ]
+    # paths:
+    #   - 'alpine/Dockerfile'
+    #   - '.github/workflows/nginx-alpine.yaml'
+
+  # schedule:
+  #   - cron: '0 3 * * *' # 每天构建一次（可选）
+  schedule:
+    - cron: '0 3 * * 1' # 每周一构建一次 (例如，每周一凌晨3点)
+
+env:
+  DOCKER_REPO: bailangvvking/sonic
 
 jobs:
-  docker:
+  build:
     runs-on: ubuntu-latest
+
     steps:
-      -
-        name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-      -
-        name: Set up Docker Buildx
+      - name: Check Server Performance(检查服务器性能)
+        run: |
+          echo "警告⚠"
+          echo "分配的服务器性能有限，若选择的插件过多，务必注意CPU性能！"
+          echo -e "已知CPU型号（降序）：7763，8370C，8272CL，8171M，E5-2673 \n"
+          echo "--------------------------CPU信息--------------------------"
+          echo "CPU物理数量：$(cat /proc/cpuinfo | grep "physical id" | sort | uniq | wc -l)"
+          echo -e "CPU核心信息：$(cat /proc/cpuinfo | grep name | cut -f2 -d: | uniq -c) \n"
+          echo "--------------------------内存信息--------------------------"
+          echo "已安装内存详细信息："
+          echo -e "$(sudo lshw -short -C memory | grep GiB) \n"
+          echo "--------------------------硬盘信息--------------------------"
+          echo "硬盘数量：$(ls /dev/sd* | grep -v [1-9] | wc -l)" && df -hT
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      -
-        name: Login to Docker Hub
+
+      # - name: Get latest Nginx version
+      #   id: get_version
+      #   run: |
+      #     VER=$(curl -s https://nginx.org/en/download.html | grep -Eo 'nginx-[0-9]+\.[0-9]+\.[0-9]+\.tar\.gz' | head -n1 | cut -d'-' -f2 | cut -d'.' -f1-3)
+      #     TS=$(TZ=Asia/Shanghai date '+%Y-%m-%d-%H_%M_%S')
+      #     echo "NGINX_VERSION=$VER" >> $GITHUB_ENV
+      #     echo "TAG=${VER}-${TS}" >> $GITHUB_ENV
+      #     echo "Latest Nginx version: $VER, tag: ${VER}-${TS}"
+
+      - name: Log in to DockerHub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - 
-        name: Set build time
-        run: |
-          echo "BUILD_TIME=$(date +%FT%T%z)" >> $GITHUB_ENV          
-      -
-        name: Build and push
+
+      - name: Build and Push Docker image
         uses: docker/build-push-action@v5
         with:
-          # platforms: linux/arm64,linux/amd64
+          context: .
+          file: ./scripts/Dockerfile
+          # platforms: linux/amd64, linux/arm64, linux/riscv64
+          # platforms: linux/amd64,linux/arm64
           platforms: linux/amd64
           push: true
-          file: ./scripts/Dockerfile
-          no-cache: true  # 添加这行来禁用缓存
+          # tags: |
+          #   ${{ env.DOCKER_REPO }}:latest
+          #   # ${{ env.DOCKER_REPO }}:${{ env.TAG }}
+          #   ${{ env.DOCKER_REPO }}:alpine
+          # # tags: ${{ env.DOCKER_REPO }}:busybox-static
           tags: |
-            bailangvvking/sonic:latest
-            bailangvvking/sonic:${{github.ref_name}}
-            bailangvvking/sonic:${{github.ref_name}}-envvars
-          labels: |
-            org.opencontainers.image.title=Sonic Blog System
-            org.opencontainers.image.description=A blogging platform written in Go
-            org.opencontainers.image.version=${{github.ref_name}}
-            org.opencontainers.image.source=https://github.com/go-sonic/sonic
-            org.opencontainers.image.documentation=https://sonicdocs.vercel.app/
-            org.opencontainers.image.authors=Go-Sonic Team
+            ${{ env.DOCKER_REPO }}:latest
+            ${{ env.DOCKER_REPO }}:alpine
           build-args: |
-            SONIC_VERSION=${{github.ref_name}}
-            BUILD_COMMIT=${{github.sha}}
-            BUILD_TIME=${{env.BUILD_TIME}}
+              NGINX_VERSION=${{ env.NGINX_VERSION }}
