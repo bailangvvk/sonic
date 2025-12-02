@@ -16,13 +16,14 @@ RUN set -eux && \
     # 克隆源代码
     git clone --branch menory --depth 1 https://github.com/bailangvvk/sonic . && \
     # 构建应用
-    CGO_ENABLED=1 GOOS=linux go build -o sonic -trimpath . && \
+    CGO_ENABLED=1 GOOS=linux go build -o /app/sonic -trimpath . && \
     # 准备运行文件
     mkdir -p /app && \
-    cp sonic /app/ && \
     cp -r conf /app/ && \
     cp -r resources /app/ && \
-    cp scripts/docker_init.sh /app/
+    cp scripts/docker_init.sh /app/ && \
+    # 确保可执行文件权限
+    chmod +x /app/sonic
 
 # 运行阶段
 FROM busybox:musl
