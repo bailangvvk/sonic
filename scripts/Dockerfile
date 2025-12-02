@@ -26,7 +26,8 @@ RUN set -eux && \
     chmod +x /app/sonic
 
 # 运行阶段
-FROM busybox:musl
+# FROM busybox:musl
+FROM alpine:latest AS runpod
 
 # 复制应用文件
 COPY --from=builder /app/ /app/
