@@ -3,15 +3,22 @@ FROM golang:1.19.3-alpine AS builder
 
 WORKDIR /src
 
-# 安装git并克隆源代码
-RUN apk add --no-cache git ca-certificates && \
-    git clone --branch menory --depth 1 https://github.com/bailangvvk/sonic .
-
-# 构建应用（简化版本）
-RUN CGO_ENABLED=1 GOOS=linux go build -o sonic -trimpath .
-
-# 准备运行文件
-RUN mkdir -p /app && \
+# 合并所有构建步骤到一个RUN命令（减少镜像层数）
+RUN set -eux && \
+    # 安装依赖（包括CGO编译所需工具）
+    apk add --no-cache --virtual .build-deps \
+    git \
+    ca-certificates \
+    gcc \
+    g++ \
+    build-base \
+    && \
+    # 克隆源代码
+    git clone --branch menory --depth 1 https://github.com/bailangvvk/sonic . && \
+    # 构建应用
+    CGO_ENABLED=1 GOOS=linux go build -o sonic -trimpath . && \
+    # 准备运行文件
+    mkdir -p /app && \
     cp sonic /app/ && \
     cp -r conf /app/ && \
     cp -r resources /app/ && \
