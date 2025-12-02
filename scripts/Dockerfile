@@ -43,8 +43,6 @@ RUN set -eux && \
 # FROM busybox:musl
 FROM alpine:latest AS run
 
-apk add --no-cache tzdata
-
 # 合并：复制应用文件、时区文件、CA证书
 COPY --from=builder /app/ /app/
 # COPY --from=builder /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
