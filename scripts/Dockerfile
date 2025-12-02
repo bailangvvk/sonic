@@ -36,19 +36,26 @@ RUN set -eux && \
     cp -r conf /app/ && \
     cp -r resources /app/ && \
     cp scripts/docker_init.sh /app/ && \
-    apk del --purge .build-deps \
+    apk del --purge .build-deps tzdata \
     rm -rf /go/pkg /go/src /var/cache/apk/* /tmp/*
 
 # 阶段2：运行时阶段（使用 busybox:musl，合并命令）
-FROM busybox:musl
+# FROM busybox:musl
+FROM alpine:latest AS run
+
+apk add --no-cache tzdata
 
 # 合并：复制应用文件、时区文件、CA证书
 COPY --from=builder /app/ /app/
-COPY --from=builder /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+# COPY --from=builder /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+# COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+
+RUN  apk add --no-cache tzdata \
+    && cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
+    && echo "Asia/Shanghai" > /etc/timezone
 
 # 设置时区环境变量
-ENV TZ=Asia/Shanghai
+# ENV TZ=Asia/Shanghai
 
 VOLUME /sonic
 EXPOSE 8080
