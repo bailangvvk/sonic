@@ -13,7 +13,7 @@ RUN set -eux && \
     gcc \
     g++ && \
     # 浅克隆源代码
-    git clone --branch menory --depth 1 https://github.com/bailangvvk/sonic . && \
+    git clone --branch master --depth 1 https://github.com/bailangvvk/sonic . && \
     # 构建应用（Hugo风格激进优化）
     CGO_ENABLED=1 GOOS=linux go build -o sonic \
         -ldflags="-s -w -extldflags '-static' -X github.com/go-sonic/sonic/consts.SonicVersion=docker" \
