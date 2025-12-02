@@ -11,9 +11,9 @@ RUN set -eux && \
         build-base \
         tzdata \
         && \
-    mkdir -p /go-sonic
+    mkdir -p /go/src/github.com/go-sonic/sonic
 
-WORKDIR /go-sonic
+WORKDIR /go/src/github.com/go-sonic/sonic
 
 COPY . .
 
