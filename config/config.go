@@ -33,8 +33,14 @@ func NewConfig() *Config {
 	viper.SetDefault("sonic.admin_url_path", "admin")
 
 	conf := &Config{}
+	// 尝试读取配置文件，如果文件不存在，仅使用环境变量和默认值
 	if err := viper.ReadInConfig(); err != nil {
-		panic(err)
+		// 配置文件不存在时，不panic，继续使用环境变量和默认值
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			// 如果是其他错误（如格式错误），仍然panic
+			panic(err)
+		}
+		// 配置文件不存在，使用默认值
 	}
 	if err := viper.Unmarshal(conf); err != nil {
 		panic(err)

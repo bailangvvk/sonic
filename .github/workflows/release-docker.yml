@@ -1,8 +1,10 @@
 name: Release-Docker
 
 on:
-  release:
-    types: [published]     
+  # release:
+  #   types: [published]     
+  push:
+    branches: [ menory ]
 
 jobs:
   docker:
@@ -28,11 +30,24 @@ jobs:
         name: Build and push
         uses: docker/build-push-action@v5
         with:
-          platforms: linux/arm64,linux/amd64
+          # platforms: linux/arm64,linux/amd64
+          platforms: linux/amd64
           push: true
           file: ./scripts/Dockerfile
-          tags: gosonic/sonic:latest,gosonic/sonic:${{github.ref_name}}
+          tags: |
+            bailangvvking/sonic:latest
+            bailangvvking/sonic:${{github.ref_name}}
+            bailangvvking/sonic:${{github.ref_name}}-envvars
+          labels: |
+            org.opencontainers.image.title=Sonic Blog System
+            org.opencontainers.image.description=A blogging platform written in Go
+            org.opencontainers.image.version=${{github.ref_name}}
+            org.opencontainers.image.source=https://github.com/go-sonic/sonic
+            org.opencontainers.image.documentation=https://sonicdocs.vercel.app/
+            org.opencontainers.image.authors=Go-Sonic Team
           build-args: |
             SONIC_VERSION=${{github.ref_name}}
             BUILD_COMMIT=${{github.sha}}
             BUILD_TIME=${{env.BUILD_TIME}}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
