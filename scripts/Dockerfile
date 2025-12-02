@@ -34,4 +34,5 @@ VOLUME /sonic
 EXPOSE 8080
 
 WORKDIR /sonic
-CMD /app/docker_init.sh && /app/sonic -config /sonic/conf/config.yaml
+# CMD /app/docker_init.sh && /app/sonic -config /sonic/conf/config.yaml
+CMD /app/docker_init.sh && /app/sonic
