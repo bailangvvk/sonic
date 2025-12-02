@@ -8,7 +8,7 @@ RUN set -eux && \
         ca-certificates \
         gcc \
         g++ \
-        .build-base \
+        .build-deps \
         tzdata && \
     mkdir -p /go/src/github.com/go-sonic/sonic
 
