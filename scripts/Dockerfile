@@ -3,12 +3,12 @@ FROM golang:1.19.3-alpine AS builder
 
 # 合并：安装所有依赖（包括时区数据）、设置工作目录、复制代码、构建应用、准备运行文件
 RUN set -eux && \
-    apk add --no-cache build-deps \
+    apk add --no-cache --virtual .build-deps \
         git \
         ca-certificates \
         gcc \
         g++ \
-        build-deps \
+        build-base \
         tzdata && \
     mkdir -p /go/src/github.com/go-sonic/sonic
 
@@ -34,7 +34,7 @@ RUN set -eux && \
     cp -r conf /app/ && \
     cp -r resources /app/ && \
     cp scripts/docker_init.sh /app/ && \
-    apk del --purge build-deps \
+    apk del --purge .build-deps \
     rm -rf /go/pkg /go/src /var/cache/apk/* /tmp/*
 
 # 阶段2：运行时阶段（使用 busybox:musl，合并命令）
