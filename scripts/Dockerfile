@@ -9,8 +9,7 @@ ARG BUILD_TIME
 ARG SONIC_VERSION
 
     
-RUN CGO_ENABLED=1 GOOS=linux && \
-go build -o sonic -ldflags="-s -w -X github.com/go-sonic/sonic/consts.SonicVersion=${SONIC_VERSION} -X github.com/go-sonic/sonic/consts.BuildCommit=${BUILD_COMMIT} -X github.com/go-sonic/sonic/consts.BuildTime=${BUILD_TIME}" -trimpath .
+RUN CGO_ENABLED=1 GOOS=linux go build -a -o sonic -ldflags="-s -w -X github.com/go-sonic/sonic/consts.SonicVersion=${SONIC_VERSION} -X github.com/go-sonic/sonic/consts.BuildCommit=${BUILD_COMMIT} -X github.com/go-sonic/sonic/consts.BuildTime=${BUILD_TIME}" -trimpath .
 
 RUN mkdir -p /app/conf && \
     mkdir /app/resources && \
