@@ -7,8 +7,8 @@ RUN apk --no-cache add git ca-certificates gcc g++
 COPY . /go/src/github.com/go-sonic/sonic/
 WORKDIR /go/src/github.com/go-sonic/sonic
 
-# 构建应用（简化版本，移除不必要的ldflags参数）
-RUN CGO_ENABLED=1 GOOS=linux go build -o sonic -trimpath .
+# 构建应用（保留必要的优化参数）
+RUN CGO_ENABLED=1 GOOS=linux go build -o sonic -ldflags="-s -w" -trimpath .
 
 # 准备运行文件并在同一层清理
 RUN mkdir -p /app && \
