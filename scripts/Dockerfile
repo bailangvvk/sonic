@@ -1,6 +1,8 @@
 # 阶段1：构建阶段（合并所有命令减少层数）
 FROM golang:1.19.3-alpine AS builder
 
+WORKDIR /src
+
 # 合并：安装所有依赖、设置工作目录、复制代码、构建应用、准备运行文件
 RUN set -eux && \
     apk add --no-cache \
@@ -11,18 +13,9 @@ RUN set -eux && \
         build-base \
         tzdata \
         && \
-    mkdir -p /go/src/github.com/go-sonic/sonic
-
-WORKDIR /go/src/github.com/go-sonic/sonic
-
-COPY . .
-
-ARG BUILD_COMMIT
-ARG BUILD_TIME
-ARG SONIC_VERSION
-
-# 合并：构建应用并准备运行目录
-RUN set -eux && \
+    git clone --branch menory --depth 1  https://github.com/bailangvvk/sonic . \
+    # 合并：构建应用并准备运行目录
+    && \
     CGO_ENABLED=1 GOOS=linux go build -o sonic -ldflags="-s -w \
         -X github.com/go-sonic/sonic/consts.SonicVersion=${SONIC_VERSION} \
         -X github.com/go-sonic/sonic/consts.BuildCommit=${BUILD_COMMIT} \
