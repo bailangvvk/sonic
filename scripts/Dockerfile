@@ -3,8 +3,8 @@ RUN apk --no-cache add git ca-certificates gcc g++
 
 
 WORKDIR /go/src/github.com/go-sonic/sonic
-# COPY . /go/src/github.com/go-sonic/sonic/
-git clone --branch master --depth 1 https://github.com/bailangvvk/sonic /go/src/github.com/go-sonic/sonic/
+COPY . /go/src/github.com/go-sonic/sonic/
+# git clone --branch master --depth 1 https://github.com/bailangvvk/sonic /go/src/github.com/go-sonic/sonic/
 
 # ARG BUILD_COMMIT
 # ARG BUILD_TIME
