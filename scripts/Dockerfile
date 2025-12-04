@@ -1,51 +1,40 @@
-# 构建阶段
 FROM golang:1.19.3-alpine as builder
+RUN apk --no-cache add git ca-certificates gcc g++
 
-# 设置工作目录
-WORKDIR /src
 
-# 一次性安装所有依赖并克隆代码、构建应用
-RUN set -eux && \
-    # 安装构建工具
-    apk add --no-cache --virtual .build-deps \
-    git \
-    ca-certificates \
-    gcc \
-    g++ && \
-    # 浅克隆源代码
-    git clone --branch master --depth 1 https://github.com/bailangvvk/sonic . && \
-    # 构建应用（Hugo风格激进优化）
-    CGO_ENABLED=1 GOOS=linux go build -o sonic \
-        -ldflags="-s -w -extldflags '-static' -X github.com/go-sonic/sonic/consts.SonicVersion=docker" \
-        -trimpath . && \
-    # 使用strip进一步减小二进制大小
-    strip --strip-all sonic && \
-    # 准备运行文件
-    mkdir -p /app && \
-    cp sonic /app/ && \
-    cp -r conf /app/ && \
-    cp -r resources /app/ && \
-    cp scripts/docker_init.sh /app/ && \
-    # 清理构建缓存
-    rm -rf /go/pkg /src /var/cache/apk/* /tmp/*
+WORKDIR /go/src/github.com/go-sonic/sonic
+# COPY . /go/src/github.com/go-sonic/sonic/
+git clone --branch master --depth 1 https://github.com/bailangvvk/sonic /go/src/github.com/go-sonic/sonic/
 
-# 运行时阶段
-FROM alpine:latest
+# ARG BUILD_COMMIT
+# ARG BUILD_TIME
+# ARG SONIC_VERSION
 
-# 复制应用文件
+    
+RUN CGO_ENABLED=1 GOOS=linux && \
+go build -o sonic -ldflags="-s -w -extldflags '-static' -X github.com/go-sonic/sonic/consts.SonicVersion=docker" -trimpath .
+
+RUN mkdir -p /app/conf && \
+    mkdir /app/resources && \
+    cp -r /go/src/github.com/go-sonic/sonic/sonic /app/ && \
+    cp -r /go/src/github.com/go-sonic/sonic/conf /app/ && \
+    cp -r /go/src/github.com/go-sonic/sonic/resources /app/ && \
+    cp /go/src/github.com/go-sonic/sonic/scripts/docker_init.sh /app/
+
+
+
+
+FROM alpine:latest as prod
+
 COPY --from=builder /app/ /app/
 
-# 设置时区和清理缓存
-RUN apk add --no-cache tzdata && \
-    cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
-    echo "Asia/Shanghai" > /etc/timezone && \
-    rm -rf /var/cache/apk/*
-
-# 创建必要的目录结构
-RUN mkdir -p /sonic/logs
+RUN  apk add --no-cache tzdata \
+    && cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
+    && echo "Asia/Shanghai" > /etc/timezone
 
 VOLUME /sonic
 EXPOSE 8080
 
 WORKDIR /sonic
 CMD /app/docker_init.sh && /app/sonic
+# CMD /app/docker_init.sh && /app/sonic -config /sonic/conf/config.yaml
